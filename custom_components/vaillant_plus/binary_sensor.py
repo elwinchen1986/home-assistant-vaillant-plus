@@ -37,30 +37,17 @@ class VaillantBinarySensorDescription(
 
 
 BINARY_SENSOR_DESCRIPTIONS = (
-    VaillantBinarySensorDescription(
-        key="Circulation_Enable",
-        name="Circulation",
-        device_class=BinarySensorDeviceClass.RUNNING,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        on_state=1,
-    ),
+    
     VaillantBinarySensorDescription(
         key="Heating_Enable",
-        name="Heating",
+        name="暖气开启状态",
         device_class=BinarySensorDeviceClass.RUNNING,
         entity_category=EntityCategory.DIAGNOSTIC,
         on_state=1,
     ),
     VaillantBinarySensorDescription(
         key="WarmStar_Tank_Loading_Enable",
-        name="WarmStar tank loading",
-        device_class=BinarySensorDeviceClass.RUNNING,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        on_state=1,
-    ),
-    VaillantBinarySensorDescription(
-        key="Enabled_Heating",
-        name="Heating boiler",
+        name="生活热水状态",
         device_class=BinarySensorDeviceClass.RUNNING,
         entity_category=EntityCategory.DIAGNOSTIC,
         on_state=1,
@@ -73,36 +60,36 @@ BINARY_SENSOR_DESCRIPTIONS = (
         on_state=1,
     ),
     VaillantBinarySensorDescription(
-        key="BMU_Platform",
-        name="BMU platform",
-        # device_class=BinarySensorDeviceClass.RUNNING,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        on_state=1,
-    ),
-    VaillantBinarySensorDescription(
         key="Weather_compensation",
-        name="Weather compensation",
+        name="气候补偿状态",
         device_class=BinarySensorDeviceClass.RUNNING,
         entity_category=EntityCategory.DIAGNOSTIC,
         on_state=1,
     ),
     VaillantBinarySensorDescription(
-        key="RF_Status",
-        name="EBus status",
+        key="ebus_status",
+        name="EBus连接状态",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         entity_category=EntityCategory.DIAGNOSTIC,
-        on_state=3,
+        on_state=1,
     ),
-    VaillantBinarySensorDescription(
-        key="Boiler_info3_bit0",
-        name="Boiler heating demand",
+	VaillantBinarySensorDescription(
+        key="burn_status",
+        name="燃烧状态",
         device_class=BinarySensorDeviceClass.RUNNING,
         entity_category=EntityCategory.DIAGNOSTIC,
-        on_state=True,
+        on_state=4,
+    ),
+    VaillantBinarySensorDescription(
+        key="warmstart_enable",
+        name="Warmstart enable",
+        device_class=BinarySensorDeviceClass.RUNNING,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        on_state=1,
     ),
     VaillantBinarySensorDescription(
         key="Boiler_info5_bit4",
-        name="Boiler need refill water",
+        name="水箱是否缺水",
         device_class=BinarySensorDeviceClass.PROBLEM,
         entity_category=EntityCategory.DIAGNOSTIC,
         on_state=True,
@@ -168,16 +155,17 @@ class VaillantBinarySensorEntity(VaillantEntity, BinarySensorEntity):
     @callback
     def update_from_latest_data(self, data: dict[str, Any]) -> None:
         """Update the entity from the latest data."""
-        self._attr_available = data[self.entity_description.key] is not None
+        # self._attr_available = data[self.entity_description.key] is not None
+        
+        if self.entity_description.key in data:
+            self._attr_available = data[self.entity_description.key] is not None
 
         value: Any = data.get(self.entity_description.key)
-        if self.entity_description.key == "RF_Status":
-            self._attr_is_on = value == 3
-        elif self.entity_description.key == "Boiler_info3_bit0":
-            self._attr_is_on = value.startswith("1")
-        elif self.entity_description.key == "Boiler_info5_bit4":
-            self._attr_is_on = value.startswith("1")
+        if self.entity_description.key == "Boiler_info5_bit4":
+            self._attr_is_on = value == 1
         elif self.entity_description.on_state is not None:
             self._attr_is_on = value == self.entity_description.on_state
         else:
             self._attr_is_on = value is True
+            
+        self.async_schedule_update_ha_state()
