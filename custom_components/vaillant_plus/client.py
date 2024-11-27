@@ -71,15 +71,16 @@ class VaillantClient:
         @callback
         def device_connected(device_attrs: dict[str, Any]):
             self._device_attrs = device_attrs.copy()
-            async_dispatcher_send(
-                self._hass, EVT_DEVICE_CONNECTED.format(self._device_id), device_attrs.copy()
-            )
+            if 'gateway_sn' in self._device_attrs:
+                async_dispatcher_send(
+                    self._hass, EVT_DEVICE_CONNECTED.format(self._device_id), device_attrs.copy()
+                )
 
         @callback
         def device_update(event: str, data: dict[str, Any]):
             if event == EVT_DEVICE_ATTR_UPDATE:
                 device_attrs: dict[str, Any] = data.get("data", {})
-                if len(device_attrs) > 0:
+                if len(device_attrs) > 0 and 'gateway_sn' in device_attrs:
                     self._device_attrs = device_attrs.copy()
                     async_dispatcher_send(
                         self._hass, EVT_DEVICE_UPDATED.format(self._device.id), device_attrs.copy()
