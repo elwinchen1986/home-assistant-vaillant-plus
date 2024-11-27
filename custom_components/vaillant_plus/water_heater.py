@@ -113,7 +113,7 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     @property
     def current_operation(self) -> str | None:
         """Return current operation ie. eco, electric, performance, ..."""
-        value = self.get_device_attr("Enabled_DHW")
+        value = self.get_device_attr("WarmStar_Tank_Loading_Enable")
         if value is None:
             return None
         if value == 1:
@@ -129,7 +129,7 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     def current_temperature(self) -> float:
         """Return the current dhw temperature."""
 
-        return self.get_device_attr("Flow_temperature")
+        return self.get_device_attr("DHW_setpoint")
 
     @property
     def target_temperature(self) -> float:
@@ -160,6 +160,8 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
             new_temperature,
         )
 
+        self.set_device_attr("DHW_setpoint", new_temperature)
+
     async def async_set_operation_mode(self, operation_mode: str) -> None:
         """Set new target operation mode."""
         value = 1
@@ -169,6 +171,8 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
         _LOGGER.debug("Setting operation mode to: %s", value)
 
         await self.send_command("WarmStar_Tank_Loading_Enable", value)
+
+        self.set_device_attr("WarmStar_Tank_Loading_Enable", value)
 
     @property
     def min_temp(self) -> float:
