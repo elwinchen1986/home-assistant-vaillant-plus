@@ -14,6 +14,8 @@
 
 Home Assistant custom component for controlling vSmart in Vaillant+ cn app.
 
+支持威能网关
+
 ## Screenshot
 
 ![screenshot](docs/images/screenshot-all.jpg)
