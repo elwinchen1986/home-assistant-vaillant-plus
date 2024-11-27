@@ -15,6 +15,10 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from homeassistant.const import (
+    UnitOfTemperature
+)
+
 from .client import VaillantClient
 from .const import CONF_DID, DISPATCHERS, DOMAIN, EVT_DEVICE_CONNECTED, API_CLIENT
 from .entity import VaillantEntity
@@ -23,89 +27,96 @@ _LOGGER = logging.getLogger(__name__)
 
 
 SENSOR_DESCRIPTIONS = (
-    SensorEntityDescription(
-        key="Room_Temperature_Setpoint_Comfort",
-        name="Room temperature setpoint of comfort mode",
-        device_class=SensorDeviceClass.TEMPERATURE,
+
+	SensorEntityDescription(
+        key="water_pressure",
+        name="供暖水压",
+        device_class=SensorDeviceClass.PRESSURE,
         state_class=SensorStateClass.MEASUREMENT,
+      native_unit_of_measurement="bar",
     ),
-    SensorEntityDescription(
-        key="Room_Temperature_Setpoint_ECO",
-        name="Room temperature setpoint of ECO mode",
+	SensorEntityDescription(
+        key="indoor_temperature",
+        name="indoor emperature",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
+      native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
         key="Outdoor_Temperature",
-        name="Outdoor temperature",
+        name="Outdoor Temperature",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-    ),
-    SensorEntityDescription(
-        key="Room_Temperature",
-        name="Room temperature",
-        device_class=SensorDeviceClass.TEMPERATURE,
-        state_class=SensorStateClass.MEASUREMENT,
+      native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
         key="DHW_setpoint",
-        name="Domestic hot water setpoint",
+        name="生活热水设置温度",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
+      native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
         key="Lower_Limitation_of_CH_Setpoint",
-        name="Lower limitation of central heating setpoint",
+        name="暖气最小设置温度",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
+      native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
         key="Upper_Limitation_of_CH_Setpoint",
-        name="Upper limitation of central heating setpoint",
+        name="暖气最大设置温度",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
+      native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
         key="Lower_Limitation_of_DHW_Setpoint",
-        name="Lower limitation of domestic hot water",
+        name="生活热水最小设置温度",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
+      native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
         key="Upper_Limitation_of_DHW_Setpoint",
-        name="Upper limitation of domestic hot water",
+        name="生活热水最大设置温度",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
-    ),
-    SensorEntityDescription(
-        key="Current_DHW_Setpoint",
-        name="Current domestic hot water setpoint",
-        device_class=SensorDeviceClass.TEMPERATURE,
-        state_class=SensorStateClass.MEASUREMENT,
+      native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
         key="Flow_Temperature_Setpoint",
-        name="Flow temperature setpoint",
+        name="暖气设置温度",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
+      native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
         key="Flow_temperature",
-        name="Flow temperature",
+        name="供暖出水温度",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
+      native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
         key="return_temperature",
-        name="Return flow temperature",
+        name="供暖回水温度",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
+      native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
-        key="Tank_temperature",
-        name="Water tank temperature",
-        device_class=SensorDeviceClass.TEMPERATURE,
-        state_class=SensorStateClass.MEASUREMENT,
+        key="Mode_Setting_CH",
+        name="Mode Setting CH",
+    ),
+
+     SensorEntityDescription(
+        key="Heating_System_Setting",
+        name="Heating System Setting",
+    ),
+      SensorEntityDescription(
+        key="burn_status",
+        name="burn_status",
     ),
 )
 
@@ -166,5 +177,12 @@ class VaillantSensorEntity(VaillantEntity, SensorEntity):
         """Update the entity from the latest data."""
 
         value = data.get(self.entity_description.key)
+        
         self._attr_native_value = value
         self._attr_available = value is not None
+
+        self.async_schedule_update_ha_state()
+#        _LOGGER.warning("sensor update data %s==%s",self.entity_description.key,value)、
+        
+
+
