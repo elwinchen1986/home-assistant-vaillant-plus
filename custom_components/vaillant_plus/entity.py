@@ -11,7 +11,7 @@ from vaillant_plus_cn_api import Device
 from .client import VaillantClient
 from .const import DOMAIN, EVT_DEVICE_UPDATED
 
-UPDATE_INTERVAL = timedelta(minutes=1)
+UPDATE_INTERVAL = timedelta(seconds=30)
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -38,7 +38,19 @@ class VaillantEntity(Entity):
         if self._client.device_attrs.get(attr) is not None:
             return self._client.device_attrs.get(attr)
         return None
+        
+    def set_device_attr(self, attr, value):
+        """
+        Set the value of a device attribute.
+        """
 
+        if attr in self._client.device_attrs:
+           self._client.device_attrs[attr] = value
+           self.update_from_latest_data(self.device_attrs.copy())
+           self.async_write_ha_state()
+        else:
+            _LOGGER.warning(f"Attribute {attr} not found in device attributes.")
+            
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
 
@@ -47,7 +59,6 @@ class VaillantEntity(Entity):
             """Update the state."""
             _LOGGER.debug("write ha state: %s", data)
             self.update_from_latest_data(data)
-            self.async_schedule_update_ha_state()
 
         self.async_on_remove(
             async_dispatcher_connect(
@@ -78,6 +89,8 @@ class VaillantEntity(Entity):
     @callback
     def update_from_latest_data(self, data: dict[str, Any]) -> None:
         """Update the entity from the latest data."""
+#        _LOGGER.warning("VaillantEntity update_from_latest_data %s",data)
+        self.async_schedule_update_ha_state()
 
     async def send_command(self, attr: str, value: Any) -> None:
         """Send operations to cloud."""
