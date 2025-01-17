@@ -75,12 +75,12 @@ class VaillantClient:
                 async_dispatcher_send(
                     self._hass, EVT_DEVICE_CONNECTED.format(self._device_id), device_attrs.copy()
                 )
-
+# and 'gateway_sn' in device_attrs
         @callback
         def device_update(event: str, data: dict[str, Any]):
             if event == EVT_DEVICE_ATTR_UPDATE:
                 device_attrs: dict[str, Any] = data.get("data", {})
-                if len(device_attrs) > 0 and 'gateway_sn' in device_attrs:
+                if len(device_attrs) > 0 :
                     self._device_attrs = device_attrs.copy()
                     async_dispatcher_send(
                         self._hass, EVT_DEVICE_UPDATED.format(self._device.id), device_attrs.copy()
@@ -113,7 +113,7 @@ class VaillantClient:
             except InvalidAuthError:
                 await self._get_token()
             except Exception as error:
-                _LOGGER.warning("Unhandled client exception: %s", error)
+                _LOGGER.error("Unhandled client exception: %s", error)
 
             self._sleep_task = asyncio.create_task(asyncio.sleep(5))
             await self._sleep_task
