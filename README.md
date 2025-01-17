@@ -12,9 +12,9 @@
 
 [![Community Forum][forum-shield]][forum]
 
-Home Assistant custom component for controlling vSmart in Vaillant+ cn app.
+原作者地址 https://github.com/daxingplay/home-assistant-vaillant-plus
 
-在之前的基础上增加威能网关设备
+由于作者版本不支持威能网关设备，在之前的基础上增加威能网关设备支持
 
 ## Screenshot
 
