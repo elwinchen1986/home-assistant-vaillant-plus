@@ -77,6 +77,10 @@ async def async_setup_entry(
 class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     """Vaillant vSMART Water Heater."""
 
+    def __init__(self, client):
+        self._client = client  # 保存 client 参数
+        self._cache = {}  # 初始化缓存字典
+
     @property
     def should_poll(self) -> bool:
         return False
@@ -84,19 +88,16 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     @property
     def unique_id(self) -> str:
         """Return a unique ID to use for this entity."""
-
         return f"{self.device.id}_water_heater"
 
     @property
     def name(self) -> str | None:
         """Return the name of the water heater."""
-
         return None
 
     @property
     def supported_features(self) -> int:
         """Return the flag of supported features for the climate."""
-
         return SUPPORTED_FEATURES
 
     @property
@@ -107,18 +108,15 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     @property
     def temperature_unit(self) -> str:
         """Return the measurement unit for all temperature values."""
-
         return UnitOfTemperature.CELSIUS
 
     @property
     def current_operation(self) -> str | None:
         """Return current operation ie. eco, electric, performance, ..."""
-        value = self.get_device_attr("WarmStar_Tank_Loading_Enable")
+        value = self._get_cached_value("WarmStar_Tank_Loading_Enable")
         if value is None:
             return None
-        if value == 1:
-            return WATER_HEATER_ON
-        return WATER_HEATER_OFF
+        return WATER_HEATER_ON if value == 1 else WATER_HEATER_OFF
 
     @property
     def operation_list(self) -> list[str] | None:
@@ -128,24 +126,22 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
     @property
     def current_temperature(self) -> float:
         """Return the current dhw temperature."""
-
-        return self.get_device_attr("DHW_setpoint")
+        return self._get_cached_value("DHW_setpoint")
 
     @property
     def target_temperature(self) -> float:
         """Return the targeted dhw temperature. Current_DHW_Setpoint or DHW_setpoint"""
-
-        return self.get_device_attr("DHW_setpoint")
+        return self._get_cached_value("DHW_setpoint")
 
     @property
     def target_temperature_high(self) -> float | None:
         """Return the highbound target temperature we try to reach."""
-        return self.get_device_attr("Upper_Limitation_of_DHW_Setpoint")
+        return self._get_cached_value("Upper_Limitation_of_DHW_Setpoint")
 
     @property
     def target_temperature_low(self) -> float | None:
         """Return the lowbound target temperature we try to reach."""
-        return self.get_device_attr("Lower_Limitation_of_DHW_Setpoint")
+        return self._get_cached_value("Lower_Limitation_of_DHW_Setpoint")
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature."""
@@ -155,31 +151,53 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
 
         _LOGGER.debug("Setting target temperature to: %s", new_temperature)
 
-        await self.send_command(
-            "DHW_setpoint",
-            new_temperature,
-        )
-
-        self.set_device_attr("DHW_setpoint", new_temperature)
+        await self._update_device_attribute("DHW_setpoint", new_temperature)
 
     async def async_set_operation_mode(self, operation_mode: str) -> None:
         """Set new target operation mode."""
-        value = 1
-        if operation_mode == WATER_HEATER_OFF:
-            value = 0
+        value = 1 if operation_mode == WATER_HEATER_ON else 0
 
-        _LOGGER.debug("Setting operation mode to: %s", value)
+        _LOGGER.debug("Setting operation mode to: %s", operation_mode)
 
-        await self.send_command("WarmStar_Tank_Loading_Enable", value)
-
-        self.set_device_attr("WarmStar_Tank_Loading_Enable", value)
+        await self._update_device_attribute("WarmStar_Tank_Loading_Enable", value)
 
     @property
     def min_temp(self) -> float:
         """Return the minimum temperature."""
-        return self.get_device_attr("Lower_Limitation_of_DHW_Setpoint")
+        return self._get_cached_value("Lower_Limitation_of_DHW_Setpoint")
 
     @property
     def max_temp(self) -> float:
         """Return the maximum temperature."""
-        return self.get_device_attr("Upper_Limitation_of_DHW_Setpoint")
+        return self._get_cached_value("Upper_Limitation_of_DHW_Setpoint")
+
+    def _get_cached_value(self, attr_name: str, default: Any = None) -> Any:
+        """
+        Get a cached value for a device attribute.
+        If the value is not available, return the last known value or a default value.
+        """
+        try:
+            value = self.get_device_attr(attr_name)
+            if value is not None:
+                self._cache[attr_name] = value  # 更新缓存
+        except (AttributeError, KeyError) as e:
+            _LOGGER.debug("Failed to get device attribute %s: %s", attr_name, e)
+            value = None  # 如果获取失败，保持上一次的值
+
+        # 如果当前值为 None 且缓存值不为 None，则返回缓存值
+        if value is None and attr_name in self._cache:
+            return self._cache[attr_name]
+
+        # 如果当前值和缓存值都为 None，则返回默认值
+        return value if value is not None else default
+
+    async def _update_device_attribute(self, attr_name: str, value: Any) -> None:
+        """
+        Update a device attribute and the cache.
+        """
+        try:
+            await self.send_command(attr_name, value)
+            self._cache[attr_name] = value  # 更新缓存
+            self.set_device_attr(attr_name, value)
+        except Exception as e:
+            _LOGGER.error("Failed to update device attribute %s: %s", attr_name, e)
