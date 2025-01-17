@@ -159,13 +159,12 @@ class VaillantBinarySensorEntity(VaillantEntity, BinarySensorEntity):
         
         if self.entity_description.key in data:
             self._attr_available = data[self.entity_description.key] is not None
-
-        value: Any = data.get(self.entity_description.key)
-        if self.entity_description.key == "Boiler_info5_bit4":
-            self._attr_is_on = value == 1
-        elif self.entity_description.on_state is not None:
-            self._attr_is_on = value == self.entity_description.on_state
-        else:
-            self._attr_is_on = value is True
+            value: Any = data.get(self.entity_description.key)
+            if self.entity_description.key == "Boiler_info5_bit4":
+                self._attr_is_on = value == 1
+            elif self.entity_description.on_state is not None:
+                self._attr_is_on = value == self.entity_description.on_state
+            else:
+                self._attr_is_on = value is True
             
-        self.async_schedule_update_ha_state()
+            self.async_schedule_update_ha_state(True)
