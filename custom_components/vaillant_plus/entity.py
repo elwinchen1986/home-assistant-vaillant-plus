@@ -42,14 +42,15 @@ class VaillantEntity(Entity):
     def set_device_attr(self, attr, value):
         """
         Set the value of a device attribute.
+        If the attribute does not exist, add it to the device attributes.
         """
-
-        if attr in self._client.device_attrs:
-           self._client.device_attrs[attr] = value
-           self.update_from_latest_data(self.device_attrs.copy())
-           self.async_write_ha_state()
+        if attr not in self._client.device_attrs:
+            self._client.device_attrs[attr] = value  # 动态添加属性
         else:
-            _LOGGER.warning(f"Attribute {attr} not found in device attributes.")
+            self._client.device_attrs[attr] = value  # 更新属性值
+
+        self.update_from_latest_data(self._client.device_attrs.copy())
+        self.async_write_ha_state()
             
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
@@ -89,8 +90,8 @@ class VaillantEntity(Entity):
     @callback
     def update_from_latest_data(self, data: dict[str, Any]) -> None:
         """Update the entity from the latest data."""
-#        _LOGGER.warning("VaillantEntity update_from_latest_data %s",data)
-        self.async_schedule_update_ha_state()
+        # _LOGGER.warning("VaillantEntity update_from_latest_data %s",data)
+        # self.async_schedule_update_ha_state()
 
     async def send_command(self, attr: str, value: Any) -> None:
         """Send operations to cloud."""
