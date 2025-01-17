@@ -176,13 +176,13 @@ class VaillantSensorEntity(VaillantEntity, SensorEntity):
     def update_from_latest_data(self, data: dict[str, Any]) -> None:
         """Update the entity from the latest data."""
 
-        value = data.get(self.entity_description.key)
+        if(self.entity_description.key in data):
+          value = data.get(self.entity_description.key)
+          self._attr_native_value = value
+          self._attr_available = value is not None
+          # _LOGGER.info("sensor update data %s==%s",self.entity_description.key,value)
+          self.async_schedule_update_ha_state(True)
         
-        self._attr_native_value = value
-        self._attr_available = value is not None
-
-        self.async_schedule_update_ha_state()
-#        _LOGGER.warning("sensor update data %s==%s",self.entity_description.key,value)、
-        
+      
 
 
