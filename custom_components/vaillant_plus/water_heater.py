@@ -191,6 +191,24 @@ class VaillantWaterHeater(VaillantEntity, WaterHeaterEntity):
         # 如果当前值和缓存值都为 None，则返回默认值
         return value if value is not None else default
 
+    @callback
+    def update_from_latest_data(self, data: dict[str, Any]) -> None:
+        """Update the water heater entity from the latest data."""
+        # 更新缓存中的关键属性，确保控制参数能及时反映外部变更
+        if "WarmStar_Tank_Loading_Enable" in data:
+            self._cache["WarmStar_Tank_Loading_Enable"] = data["WarmStar_Tank_Loading_Enable"]
+        
+        if "DHW_setpoint" in data:
+            self._cache["DHW_setpoint"] = data["DHW_setpoint"]
+        
+        if "Lower_Limitation_of_DHW_Setpoint" in data:
+            self._cache["Lower_Limitation_of_DHW_Setpoint"] = data["Lower_Limitation_of_DHW_Setpoint"]
+        
+        if "Upper_Limitation_of_DHW_Setpoint" in data:
+            self._cache["Upper_Limitation_of_DHW_Setpoint"] = data["Upper_Limitation_of_DHW_Setpoint"]
+        
+        self.async_write_ha_state()
+
     async def _update_device_attribute(self, attr_name: str, value: Any) -> None:
         """
         Update a device attribute and the cache.

@@ -37,14 +37,21 @@ SENSOR_DESCRIPTIONS = (
     ),
 	SensorEntityDescription(
         key="indoor_temperature",
-        name="indoor emperature",
+        name="室内温度",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+      native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+    SensorEntityDescription(
+        key="Tank_temperature",
+        name="水箱温度",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
       native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
         key="Outdoor_Temperature",
-        name="Outdoor Temperature",
+        name="室外温度",
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
       native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -107,16 +114,16 @@ SENSOR_DESCRIPTIONS = (
     ),
     SensorEntityDescription(
         key="Mode_Setting_CH",
-        name="Mode Setting CH",
+        name="暖气模式设置",
     ),
 
      SensorEntityDescription(
         key="Heating_System_Setting",
-        name="Heating System Setting",
+        name="供暖系统设置",
     ),
       SensorEntityDescription(
         key="burn_status",
-        name="burn_status",
+        name="燃烧器状态",
     ),
 )
 
@@ -180,9 +187,4 @@ class VaillantSensorEntity(VaillantEntity, SensorEntity):
           value = data.get(self.entity_description.key)
           self._attr_native_value = value
           self._attr_available = value is not None
-          # _LOGGER.info("sensor update data %s==%s",self.entity_description.key,value)
           self.async_schedule_update_ha_state(True)
-        
-      
-
-

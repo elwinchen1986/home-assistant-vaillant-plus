@@ -268,3 +268,27 @@ class VaillantClimate(VaillantEntity, ClimateEntity):
 
         # 如果当前值和缓存值都为 None，则返回默认值
         return value if value is not None else default
+
+    @callback
+    def update_from_latest_data(self, data: dict[str, Any]) -> None:
+        """Update the climate entity from the latest data."""
+        # 更新缓存中的关键属性，确保控制参数能及时反映外部变更
+        if "Heating_Enable" in data:
+            enable = data["Heating_Enable"]
+            if enable == 1:
+                self._cache["hvac_mode"] = HVACMode.HEAT
+                self._cache["hvac_action"] = HVACAction.HEATING
+            else:
+                self._cache["hvac_mode"] = HVACMode.OFF
+                self._cache["hvac_action"] = HVACAction.OFF
+        
+        if "Flow_Temperature_Setpoint" in data:
+            self._cache["Flow_Temperature_Setpoint"] = data["Flow_Temperature_Setpoint"]
+        
+        if "Lower_Limitation_of_CH_Setpoint" in data:
+            self._cache["Lower_Limitation_of_CH_Setpoint"] = data["Lower_Limitation_of_CH_Setpoint"]
+        
+        if "Upper_Limitation_of_CH_Setpoint" in data:
+            self._cache["Upper_Limitation_of_CH_Setpoint"] = data["Upper_Limitation_of_CH_Setpoint"]
+        
+        self.async_write_ha_state()
